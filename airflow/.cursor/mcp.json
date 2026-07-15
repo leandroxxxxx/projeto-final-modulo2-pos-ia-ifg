@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "datamate": {
+      "type": "stdio",
+      "command": "/usr/share/cursor/cursor",
+      "args": [
+        "/home/otavio/.cursor/extensions/altimateai.vscode-altimate-mcp-server-0.8.4-linux-x64/dist/datamate-cli.js",
+        "start-stdio"
+      ],
+      "env": {
+        "ALTIMATE_EXTENSION_RPC": "/tmp/altimate-mcp-21755.sock",
+        "ELECTRON_RUN_AS_NODE": "1"
+      },
+      "updatedAt": "2026-07-03T17:48:51.280Z"
+    }
+  }
+}
