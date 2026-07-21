@@ -1,0 +1,438 @@
+quarkus:
+  log:
+    console:
+      format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c{3.}] %s%e%n"
+    category:
+      "io.apicurio":
+        level: WARN
+
+  http:
+    port: ${floci.port}
+    host: 0.0.0.0
+    limits:
+      max-body-size: ${floci.max-request-size}M
+  datasource:
+    active: false
+  security:
+     security-providers: BC
+  shutdown:
+    # Enables the pre-shutdown phase so stop hooks run before the HTTP server stops.
+    # No 'delay' value is set - observers run synchronously, no artificial sleep is introduced.
+    delay-enabled: true
+  native:
+    resources:
+      # The Pricing service reads its bundled snapshot, EC2 reads its image
+      # catalog (ec2/image-catalog.yaml), AppSync's GraphQL parser reads its
+      # message bundles, and API Gateway's Velocity engine reads its default
+      # properties at runtime via
+      # ClassLoader#getResourceAsStream. Quarkus's static resource analysis
+      # cannot detect these dynamically-built paths, so they are registered
+      # explicitly to ensure GraalVM includes every file in the native image.
+      includes:
+        - pricing-snapshots/**
+        - ui/*.html
+        - ec2/*.yaml
+        - i18n/*.properties
+        - org/apache/velocity/runtime/defaults/*.properties
+    additional-build-args:
+      - --report-unsupported-elements-at-runtime
+      - --allow-incomplete-classpath
+      - --enable-url-protocols=http,https
+      - --initialize-at-run-time=io.vertx.ext.mail.impl.sasl.NTLMEngineImpl
+      - --initialize-at-run-time=com.github.dockerjava.transport.NamedPipeSocket$Kernel32
+      - --initialize-at-run-time=org.bouncycastle.jcajce.provider.drbg.DRBG$Default
+      - --initialize-at-run-time=org.bouncycastle.jcajce.provider.drbg.DRBG$NonceAndIV
+      - --initialize-at-run-time=org.bouncycastle.crypto.prng.SP800SecureRandom
+      - --initialize-at-run-time=org.bouncycastle.jcajce.provider.asymmetric.rsa.KeyPairGeneratorSpi
+      - --initialize-at-run-time=org.bouncycastle.jcajce.provider.asymmetric.x509.CertificateFactory
+      - --initialize-at-run-time=io.github.hectorvent.floci.core.common.BouncyCastleInitializer
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.acm.AcmService
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.acm.CertificateGenerator
+      - --initialize-at-run-time=io.github.hectorvent.floci.config.TlsConfigSource
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.cognito.CognitoSrpHelper
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.ses.SesService
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.route53.Route53Service
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.kms.KmsService
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.cloudfront.CloudFrontService
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.emr.EmrService
+      - --initialize-at-run-time=io.github.hectorvent.floci.services.elasticbeanstalk.ElasticBeanstalkService
+
+
+floci:
+  port: 4566
+  max-request-size: 2048
+  base-url: "http://localhost:4566"
+  # hostname: ""  # When set, overrides the hostname in response URLs (e.g. SQS QueueUrl).
+                   # Needed for multi-container Docker setups. Example: FLOCI_HOSTNAME=floci
+  default-region: us-east-1
+  default-account-id: "000000000000"
+  storage:
+    # Supported modes: memory, persistent, hybrid, wal
+    mode: memory
+    persistent-path: ./data
+    host-persistent-path: ./data
+    prune-volumes-on-delete: false
+    # EFS access-point emulation for the shared local Docker volumes that stand in for EFS file
+    # systems. All opt-in; with the defaults below (and no owner/permission overrides) volumes are
+    # plain named volumes, so existing behaviour is unchanged. Emulates an access point's
+    # RootDirectory.CreationInfo (owner-uid/owner-gid/root-permissions) and PosixUser
+    # (mount-user/mount-group-add).
+    efs:
+      # owner-uid:            # RootDirectory.CreationInfo.OwnerUid applied to the volume root (set with owner-gid)
+      # owner-gid:            # RootDirectory.CreationInfo.OwnerGid applied to the volume root (set with owner-uid)
+      # root-permissions:     # CreationInfo.Permissions, 3-4 octal digits; e.g. "0777", or "2775" for setgid
+      init-image: busybox:stable
+      # mount-user:           # run mounting containers as "uid[:gid]" (access point PosixUser)
+      # mount-group-add:      # supplementary gid added to mounting containers
+    wal:
+      compaction-interval-ms: 30000
+    services:
+      ssm:
+        flush-interval-ms: 5000
+      dynamodb:
+        flush-interval-ms: 5000
+      sns:
+        flush-interval-ms: 5000
+      lambda:
+        flush-interval-ms: 5000
+      cloudwatchlogs:
+        flush-interval-ms: 5000
+      cloudwatchmetrics:
+        flush-interval-ms: 5000
+      secretsmanager:
+        flush-interval-ms: 5000
+      acm:
+        flush-interval-ms: 5000
+      opensearch:
+        flush-interval-ms: 5000
+      batch:
+        flush-interval-ms: 5000
+      lightsail:
+        flush-interval-ms: 5000
+      codepipeline:
+        flush-interval-ms: 5000
+      s3vectors:
+        flush-interval-ms: 5000
+      ecs:
+        flush-interval-ms: 5000
+      codebuild:
+        flush-interval-ms: 5000
+      config:
+        flush-interval-ms: 5000
+      transcribe:
+        flush-interval-ms: 5000
+      codedeploy:
+        flush-interval-ms: 5000
+      tagging:
+        flush-interval-ms: 5000
+      elasticbeanstalk:
+        flush-interval-ms: 5000
+      rds:
+        # Override storage mode for RDS (memory = no Docker volumes; hybrid/persistent = named volume per instance)
+        # mode: memory
+      ec2:
+        # Override storage mode for EC2 (defaults to the global storage mode). EC2 networking and
+        # instance metadata persist so CloudFormation-created VPC/subnet ids survive a restart (#1297).
+        # mode: memory
+      appsync:
+        flush-interval-ms: 5000
+
+  dns:
+    # Extra hostname suffixes resolved to Floci's container IP by the embedded DNS server.
+    # Useful when migrating from LocalStack — add localhost.localstack.cloud to avoid
+    # changing Lambda endpoint environment variables.
+    # Via env var (comma-separated): FLOCI_DNS_EXTRA_SUFFIXES=localhost.localstack.cloud,other.internal
+    # extra-suffixes:
+    #   - localhost.localstack.cloud
+
+    # Public resolvers appended after Floci's embedded DNS on spawned containers' HostConfig.Dns,
+    # and used as the fallback upstream for Floci's own DNS forwarder. Lets Lambda/CodeBuild
+    # resolve public hostnames even if the embedded forwarder cannot answer.
+    # Disable in offline/locked-down networks where these resolvers are blocked.
+    container-fallback-enabled: true              # FLOCI_DNS_CONTAINER_FALLBACK_ENABLED
+    container-fallback-servers:                   # FLOCI_DNS_CONTAINER_FALLBACK_SERVERS=1.1.1.1,1.0.0.1
+      - 8.8.8.8
+      - 8.8.4.4
+
+  auth:
+    validate-signatures: false
+    presign-secret: local-emulator-secret
+
+  security:
+    # Comma-separated browser origins allowed by the global CORS filter.
+    # Env var: EXTRA_CORS_ALLOWED_ORIGINS=http://localhost:3000
+    # extra-cors-allowed-origins:
+    # Extra request/response CORS header names for browser clients.
+    # extra-cors-allowed-headers:
+    # extra-cors-expose-headers:
+    disable-cors-headers: false
+    # Grant Private Network Access preflights (Access-Control-Allow-Private-Network)
+    # so a page on a public/secure origin can reach this loopback backend.
+    cors-allow-private-network: false
+
+  tls:
+    enabled: false                     # FLOCI_TLS_ENABLED (default: false)
+    # cert-path: ""                    # FLOCI_TLS_CERT_PATH (PEM certificate file)
+    # key-path: ""                     # FLOCI_TLS_KEY_PATH (PEM private key file)
+    self-signed: true                  # FLOCI_TLS_SELF_SIGNED — auto-generate a self-signed cert if no cert-path provided
+    aws-https-port: 443                # FLOCI_TLS_AWS_HTTPS_PORT — also bind 443 so CDK cfn-response/AWS-on-443 callbacks reach Floci (0 disables)
+
+  protocols:
+    strict-claiming: false             # FLOCI_PROTOCOLS_STRICT_CLAIMING — reject RPC-signaled requests that no supported wire protocol claims
+
+  docker:
+    log-max-size: "10m"
+    log-max-file: "3"
+    docker-host: unix:///var/run/docker.sock
+    resource-namespace: ""          # FLOCI_DOCKER_RESOURCE_NAMESPACE; scopes child container/volume names
+    docker-config-path: ""
+
+  services:
+    ssm:
+      enabled: true
+      max-parameter-history: 5
+    sqs:
+      enabled: true
+      default-visibility-timeout: 30
+      max-message-size: 1048576
+      clear-fifo-deduplication-cache-on-purge: false
+    s3:
+      enabled: true
+      enforce-auth: false
+      default-presign-expiry-seconds: 3600
+    dynamodb:
+      enabled: true
+    sns:
+      enabled: true
+    lambda:
+      enabled: true
+      ephemeral: false
+      default-memory-mb: 128
+      default-timeout-seconds: 3
+      runtime-api-base-port: 9200
+      runtime-api-max-port: 9299
+      code-path: ./data/lambda-code
+      poll-interval-ms: 1000
+      container-idle-timeout-seconds: 300
+      region-concurrency-limit: 1000
+      unreserved-concurrency-min: 100
+      # aws-config-path:                      # Host path to bind-mount (read-only) at /opt/aws-config for real credential discovery
+      hot-reload:
+        enabled: false
+    apigateway:
+      enabled: true
+    apigatewayv2:
+      enabled: true
+    iam:
+      enabled: true
+      enforcement-enabled: false
+      seed-deployer-principal: false
+    msk:
+      enabled: true
+      mock: false
+      default-image: "redpandadata/redpanda:latest"
+      kafka-host-port-base: 9300
+      kafka-host-port-max: 9399
+    amazonmq:
+      enabled: true
+      mock: false
+      default-image: "rabbitmq:3-management"
+    elasticache:
+      enabled: true
+      proxy-base-port: 6379
+      proxy-max-port: 6399
+      default-image: "valkey/valkey:8"
+      default-memcached-image: "memcached:1.6"
+    memorydb:
+      enabled: true
+      mock: false
+      proxy-base-port: 6400
+      proxy-max-port: 6419
+      default-image: "valkey/valkey:8"
+    rds:
+      enabled: true
+      mock: false                                 # FLOCI_SERVICES_RDS_MOCK — true = metadata only, no Docker (useful for CI)
+      proxy-base-port: 7001
+      proxy-max-port: 7099
+      default-postgres-image: "postgres:16-alpine"
+      default-mysql-image: "mysql:8.0"
+      default-mariadb-image: "mariadb:11"
+    rds-data:
+      enabled: true
+      transaction-ttl-seconds: 180
+    neptune:
+      enabled: true
+      proxy-base-port: 8182
+      proxy-max-port: 8282
+      db-type: "gremlin"
+      default-image: "tinkerpop/gremlin-server:3.7.3"
+      default-neo4j-image: "neo4j:5-community"
+    eventbridge:
+      enabled: true
+    cloudmap:
+      enabled: true
+    emr:
+      enabled: true
+    wafv2:
+      enabled: true
+    scheduler:
+      enabled: true
+    cloudwatchlogs:
+      enabled: true
+      max-events-per-query: 10000
+    cloudwatchmetrics:
+      enabled: true
+    secretsmanager:
+      enabled: true
+      default-recovery-window-days: 30
+    kinesis:
+      enabled: true
+    firehose:
+      enabled: true
+    kms:
+      enabled: true
+    cognito:
+      enabled: true
+    stepfunctions:
+      enabled: true
+    cloudformation:
+      enabled: true
+    acm:
+      enabled: true
+      validation-wait-seconds: 0
+    athena:
+      enabled: true
+      mock: false
+    duck:
+      # url: http://floci-duck:3000   # set to skip container management
+      default-image: "floci/floci-duck:latest"
+    glue:
+      enabled: true
+    ses:
+      enabled: true
+      # smtp-host: mailpit          # SMTP server for email relay (empty = store only)
+      # smtp-port: 1025
+      # smtp-user: ""
+      # smtp-pass: ""
+      # smtp-starttls: DISABLED     # DISABLED, OPTIONAL, or REQUIRED
+    opensearch:
+      enabled: true
+      mock: false
+      # default-image: optional override; uncomment to lock every domain to a
+      # single image (e.g. private registry mirror). When unset, the image is
+      # picked from OpenSearchVersions.imageFor(EngineVersion).
+      # default-image: "registry.example.com/opensearch:2.19.5"
+      proxy-base-port: 9400
+      proxy-max-port: 9499
+      keep-running-on-shutdown: false
+    ec2:
+      enabled: true
+      imds-port: 9169
+      ssh-port-range-start: 2200
+      ssh-port-range-end: 2299
+      publish-security-group-ports: true
+      app-port-range-start: 30000
+      app-port-range-end: 30999
+      max-published-ports-per-instance: 20
+      socat-image: alpine/socat
+      mock: false
+    ecs:
+      enabled: true
+      mock: false
+    appconfig:
+      enabled: true
+    appconfigdata:
+      enabled: true
+    ecr:
+      enabled: true
+      registry-image: "registry:2"
+      registry-container-name: floci-ecr-registry
+      registry-base-port: 5100
+      registry-max-port: 5199
+      data-path: ./data/ecr
+      tls-enabled: false
+      keep-running-on-shutdown: true
+      uri-style: hostname
+    ui:
+      enabled: true
+      image: "floci/floci-ui:latest"
+      container-name: floci-ui
+      port: 4500
+      keep-running-on-shutdown: false
+    bedrock-runtime:
+      enabled: true
+    eks:
+      enabled: true
+      mock: false
+      provider: k3s
+      default-image: "rancher/k3s:latest"
+      api-server-base-port: 6500
+      api-server-max-port: 6599
+      data-path: ./data/eks
+      keep-running-on-shutdown: false
+      endpoint-mode: host          # host = https://localhost:<hostPort> (host-reachable); network = container DNS name
+      iam-auth-webhook: true       # wire a token-auth webhook into k3s so `aws eks get-token` works
+      ecr-registry-mirror: true    # inject a registries.yaml so pods can pull images pushed to Floci ECR
+    elbv2:
+      enabled: true
+      mock: false
+    codebuild:
+      enabled: true
+      # docker-network: floci-network
+    batch:
+      enabled: true
+      runner-mode: immediate
+      # docker-network: floci-network
+    codedeploy:
+      enabled: true
+    codepipeline:
+      enabled: true
+    autoscaling:
+      enabled: true
+    elasticbeanstalk:
+      enabled: true
+    backup:
+      enabled: true
+      job-completion-delay-seconds: 3
+    route53:
+      enabled: true
+    transfer:
+      enabled: true
+    textract:
+      enabled: true
+    pricing:
+      enabled: true
+    transcribe:
+      enabled: true
+    ce:
+      enabled: true
+      credit-usd-monthly: 0.0
+    cur:
+      enabled: true
+      emit-mode: synchronous
+      staging-bucket: floci-cur-staging
+    bcm-data-exports:
+      enabled: true
+      emit-mode: synchronous
+    cloudtrail:
+      enabled: true
+    lightsail:
+    cloudcontrol:
+      enabled: true
+    cloudfront:
+      enabled: true
+    appsync:
+      enabled: true
+      schema-worker-threads: 4
+      schema-worker-shutdown-timeout-seconds: 30
+    s3vectors:
+      enabled: true
+    iot:
+      enabled: true
+      mqtt:
+        enabled: true
+        auto-start: false
+        host: 0.0.0.0
+        port: 1883
+    iotdata:
+      enabled: true
