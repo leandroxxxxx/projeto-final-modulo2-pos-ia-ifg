@@ -1,0 +1,20 @@
+# Ambientes virtuais do Python
+.venv/
+venv/
+ENV/
+env/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Chaves de segurança do Snowflake (Ignorar em qualquer pasta)
+**/rsa_key.p8
+**/rsa_key.pub
+
+# Pastas locais pesadas que não devem ir para o GitHub
+airflow/logs/
+airflow/include/data/
+.astro/
