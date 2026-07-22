@@ -20,7 +20,7 @@ CSV_FILE_KEY = "styles_sample.csv"
 
 # Parâmetros oficiais do Snowflake
 SNOWFLAKE_USER = "FOX"
-SNOWFLAKE_ACCOUNT = None
+SNOWFLAKE_ACCOUNT = "SFEDU02-GFB24387"
 SNOWFLAKE_ROLE = "TRAINING_ROLE"
 SNOWFLAKE_WAREHOUSE = "FOX_WH"
 SNOWFLAKE_DATABASE = "FOX_DB"
@@ -64,30 +64,62 @@ def process_and_load_to_snowflake():
     print("Lendo o arquivo CSV...")
     csv_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=CSV_FILE_KEY)
     df = pd.read_csv(io.BytesIO(csv_obj['Body'].read()), on_bad_lines='skip')
-
+    
     mean_r_list, mean_g_list, mean_b_list = [], [], []
-
+    std_r_list, std_g_list, std_b_list = [], [], []
+    brightness_list = []
+    file_size_list = []
+    
     print("Iniciando a extração de atributos das imagens...")
     for idx, row in df.iterrows():
         image_key = f"images/{int(row['id'])}.jpg"
         try:
             img_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=image_key)
-            img = Image.open(io.BytesIO(img_obj['Body'].read())).convert('RGB')
+            img_bytes = img_obj['Body'].read()
+            
+            # Guardar o tamanho em bytes
+            file_size_list.append(len(img_bytes))
+            
+            # Abrir imagem e converter para RGB
+            img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
             img_array = np.array(img)
             
-            mean_r_list.append(float(np.mean(img_array[:, :, 0])))
-            mean_g_list.append(float(np.mean(img_array[:, :, 1])))
-            mean_b_list.append(float(np.mean(img_array[:, :, 2])))
+            r_channel = img_array[:, :, 0]
+            g_channel = img_array[:, :, 1]
+            b_channel = img_array[:, :, 2]
+            
+            mean_r_list.append(float(np.mean(r_channel)))
+            mean_g_list.append(float(np.mean(g_channel)))
+            mean_b_list.append(float(np.mean(b_channel)))
+            
+            # Calcular o desvio padrão (contraste)
+            std_r_list.append(float(np.std(r_channel)))
+            std_g_list.append(float(np.std(g_channel)))
+            std_b_list.append(float(np.std(b_channel)))
+            
+            # Calcular a luminosidade (brilho)
+            brightness_val = float(np.mean(0.299 * r_channel + 0.587 * g_channel + 0.114 * b_channel))
+            brightness_list.append(brightness_val)
         except Exception:
+            file_size_list.append(None)
             mean_r_list.append(None)
             mean_g_list.append(None)
             mean_b_list.append(None)
-
+            std_r_list.append(None)
+            std_g_list.append(None)
+            std_b_list.append(None)
+            brightness_list.append(None)
+    
+    df['file_size_bytes'] = file_size_list
     df['mean_r'] = mean_r_list
     df['mean_g'] = mean_g_list
     df['mean_b'] = mean_b_list
-
-    # Tratar colunas para o Snowflake
+    df['std_r'] = std_r_list
+    df['std_g'] = std_g_list
+    df['std_b'] = std_b_list
+    df['brightness'] = brightness_list
+    
+    
     df_snowflake = df.rename(columns={
         'id': 'ID',
         'gender': 'GENDER',
@@ -101,9 +133,14 @@ def process_and_load_to_snowflake():
         'productDisplayName': 'PRODUCT_DISPLAY_NAME',
         'mean_r': 'MEAN_R',
         'mean_g': 'MEAN_G',
-        'mean_b': 'MEAN_B'
+        'mean_b': 'MEAN_B',
+        'file_size_bytes': 'FILE_SIZE_BYTES',
+        'brightness': 'BRIGHTNESS',
+        'std_r': 'STD_R',
+        'std_g': 'STD_G',
+        'std_b': 'STD_B'
     })
-
+    
     # 3. Ler a chave privada para a autenticação automática (Key-Pair)
     print("Carregando chave privada para autenticação...")
     with open(KEY_PATH, "rb") as key_file:
