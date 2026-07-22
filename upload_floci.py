@@ -10,7 +10,7 @@ s3 = boto3.client(
     region_name='us-east-1'
 )
 
-bucket_name = "dataset-project"            # Nome do seu bucket
+bucket_name = "dataset-project"            # Nome do bucket
 diretorio_local = "airflow/data/dataset" # Sua pasta com os dados
 
 # 1. Tenta criar o bucket se ele ainda não existir no Floci

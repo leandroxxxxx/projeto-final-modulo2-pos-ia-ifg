@@ -1,2 +1,5 @@
 pandas
 boto3
+pillow
+numpy
+snowflake-connector-python[pandas]

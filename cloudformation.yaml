@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Template do CloudFormation para o Projeto Final de IA do IFG - S3 Bucket'
+
+Resources:
+  # Recurso que cria o Bucket S3 na nuvem real da AWS
+  FashionProjectS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      # Lembre-se: nomes de bucket no S3 real devem ser globalmente únicos na AWS!
+      # Altere o nome abaixo para garantir que não haja outro igual no mundo.
+      BucketName: 'projeto-final-ia-ifg-dataset-leandro'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  BucketName:
+    Value: !Ref FashionProjectS3Bucket
+    Description: 'Nome do S3 Bucket criado na AWS'
