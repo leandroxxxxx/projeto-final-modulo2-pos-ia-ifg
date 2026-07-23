@@ -1,0 +1,16 @@
+floci_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: SFEDU02-GFB24387
+      user: FOX
+      private_key_path: "/usr/local/airflow/include/rsa_key.p8"
+
+      role: TRAINING_ROLE
+      database: FOX_DB
+      warehouse: FOX_WH
+      schema: RAW_FASHION
+
+      threads: 4
+      client_session_keep_alive: false

@@ -21,7 +21,7 @@ Antes de iniciar, verifique se os seguintes softwares estão instalados na sua m
 
 ## 2. Configuração do ambiente
 
-Crie um ambiente virtual Python para executar os scripts de preparação dos dados.
+Crie um ambiente virtual Python para executar os scripts de preparação dos dados e configure as variáveis de ambiente necessárias.
 
 ```bash
 # Criar ambiente virtual
@@ -30,8 +30,15 @@ python -m venv .venv
 # Ativar o ambiente (Linux/macOS)
 source .venv/bin/activate
 
-# Instalar dependências
-pip install pillow pandas numpy boto3 snowflake-connector-python[pandas] cryptography
+# Instalar dependências locais
+pip install pillow pandas numpy boto3 snowflake-connector-python[pandas] cryptography python-dotenv
+```
+
+### 2.1. Variáveis de Ambiente (.env)
+Para manter credenciais e caminhos seguros e fora do controle de versão (Git), o pipeline utiliza variáveis de ambiente. Dentro do diretório `airflow/` há um arquivo **`.env.example`** com todas as variáveis necessárias. Basta copiá-lo para `.env` e preencher os valores conforme seu ambiente:
+
+```bash
+cp airflow/.env.example airflow/.env
 ```
 
 ---
@@ -144,19 +151,20 @@ Essa tabela será utilizada como camada Bronze, recebendo diretamente os dados p
 
 ## 7. Execução do pipeline
 
-Toda a orquestração está concentrada na DAG `pipeline_fashion_elt`, localizada em:
+Toda a orquestração do fluxo de dados é gerenciada de ponta a ponta pela DAG `pipeline_fashion_elt`, localizada em:
 
 ```
 airflow/dags/pypeline_fashion.py
 ```
 
-O fluxo possui duas etapas principais.
+O fluxo completo agora funciona de forma automatizada e idempotente através das seguintes etapas sequenciais:
 
-A primeira verifica automaticamente a existência do bucket no S3 local. Caso o Floci tenha sido reiniciado e o bucket não exista mais, ele é recriado automaticamente.
+1. **`check_or_create_s3_bucket`**: Verifica e recria o bucket do Floci automaticamente em caso de reinicialização do ambiente.
+2. **`process_images_and_load_to_snowflake`**: Baixa o CSV estruturado, lê as imagens do S3 local diretamente em memória, extrai suas características de cor (médias RGB e desvios padrão) usando *Pillow* e *NumPy*, executa um comando `TRUNCATE TABLE` na tabela Bronze do Snowflake para evitar duplicações e realiza o upload dos dados consolidados de forma segura.
+3. **`run_dbt_models`**: Dispara automaticamente a execução do dbt Core (`dbt run`) de dentro do container do Airflow, transformando os dados brutos e consolidando a camada **Silver (Staging)** no esquema `STAGING` do Snowflake.
+4. **`test_dbt_models`**: Executa os testes de integridade do dbt (`dbt test`) para validar a unicidade das chaves e a ausência de nulos.
 
-Na sequência, o pipeline realiza todo o processamento dos dados: baixa o arquivo CSV, percorre as imagens armazenadas no S3, extrai os valores médios dos canais RGB utilizando a biblioteca Pillow, integra essas informações aos metadados e envia o resultado diretamente para o Snowflake utilizando a função `write_pandas`.
-
-Para executar o pipeline:
+Para executar o pipeline completo:
 
 ```bash
 cd airflow
@@ -164,22 +172,19 @@ astro dev start
 ```
 
 Depois:
-
 1. Acesse `http://localhost:8080`;
 2. Ative a DAG `pipeline_fashion_elt`;
-3. Clique em **Trigger DAG** para iniciar a execução.
-
-Ao final, todos os dados processados estarão disponíveis na camada Bronze do Snowflake.
+3. Clique em **Trigger DAG** para rodar o pipeline integrado (Ingestão -> Carga -> Transformação dbt -> Testes).
 
 ---
 
 # Próximas etapas
 
-Ainda estão previstas algumas melhorias para completar o projeto.
+Ainda estão previstas as seguintes melhorias para completar o escopo do projeto:
 
-* **Modelagem analítica com dbt:** criar as camadas Silver e Gold, desenvolver dimensões e fatos, além de implementar testes de qualidade dos dados.
+* **Modelagem Analítica (Camada Gold):** modelar as tabelas analíticas finais (Fatos e Dimensões) na camada Gold utilizando o dbt, preparando a estrutura necessária para consumo de ML e painéis.
 
-* **Machine Learning:** desenvolver um modelo capaz de classificar a categoria (`MASTER_CATEGORY`) dos produtos utilizando os atributos de cor extraídos das imagens. A proposta inclui comparar uma implementação desenvolvida manualmente com outra baseada na biblioteca Scikit-learn.
+* **Machine Learning:** desenvolver o modelo de classificação para prever o campo `MASTER_CATEGORY` a partir dos atributos físicos extraídos. O projeto contará com duas implementações para fins comparativos: uma escrita de forma manual do zero (**Hard-code**) e outra utilizando a biblioteca **Scikit-learn**.
 
 * **Visualização de dados:** conectar o Metabase ao Snowflake para construir dashboards que permitam acompanhar os resultados do processamento e das previsões do modelo.
 
