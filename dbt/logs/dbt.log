@@ -61,3 +61,19 @@ click.exceptions.Abort
 [0m22:34:15.505558 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a3255880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a32ee5d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a462f140>]}
 [0m22:34:15.506070 [debug] [MainThread]: Flushing usage events
 [0m22:34:16.304119 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m15:06:32.125677 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3c912660>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3bdee6f0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3bbe5dc0>]}
+
+
+============================== 15:06:32.131610 | 0a7390fe-60fb-4a0e-93d3-ab1283342998 ==============================
+[0m15:06:32.131610 [info ] [MainThread]: Running with dbt=1.12.0
+[0m15:06:32.132665 [debug] [MainThread]: running dbt with arguments {'no_print': 'None', 'quiet': 'False', 'target_path': 'None', 'cache_selected_only': 'False', 'partial_parse': 'True', 'empty': 'None', 'use_colors': 'True', 'static_parser': 'True', 'write_json': 'True', 'warn_error': 'None', 'hints_enabled': 'True', 'version_check': 'True', 'maximum_seed_size_mib': '1', 'invocation_command': 'dbt docs serve', 'indirect_selection': 'eager', 'log_format': 'default', 'debug': 'False', 'profiles_dir': '/home/leandro/.dbt', 'fail_fast': 'False', 'log_path': 'logs', 'use_experimental_parser': 'False', 'log_cache_events': 'False', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m15:06:32.133568 [error] [MainThread]: [[31mERROR[0m]: Encountered an error:
+Runtime Error
+  No dbt_project.yml found at expected path /home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/dbt/dbt_project.yml
+  Verify that each entry within packages.yml (and their transitive dependencies) contains a file named dbt_project.yml
+  
+[0m15:06:32.134912 [debug] [MainThread]: Resource report: {"command_name": "serve", "command_success": false, "command_wall_clock_time": 0.1342751, "process_in_blocks": "55328", "process_kernel_time": 0.338824, "process_mem_max_rss": "109792", "process_out_blocks": "8", "process_user_time": 3.064367}
+[0m15:06:32.135731 [debug] [MainThread]: Command `dbt docs serve` failed at 15:06:32.135580 after 0.14 seconds
+[0m15:06:32.136288 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3a64bce0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3994e240>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7afd3994cf80>]}
+[0m15:06:32.136882 [debug] [MainThread]: Flushing usage events
+[0m15:06:33.758643 [debug] [MainThread]: An error was encountered while trying to flush usage events

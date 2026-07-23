@@ -31,6 +31,6 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   floci_dbt:
-    # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
+    # Configura todas as tabelas criadas dentro de models/staging/
+    staging:
+      +materialized: table

@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_products
+    description: "Tabela tratada da camada Silver contendo metadados de vestuário e novos atributos analíticos extraídos das imagens."
+    columns:
+      - name: id
+        description: "Identificador único do produto."
+        tests:
+          - unique
+          - not_null
+
+      - name: master_category
+        description: "Categoria principal do produto (ex: APPAREL, FOOTWEAR)."
+        tests:
+          - not_null
+
+      - name: is_multicolored
+        description: "Flag lógica indicando se o produto possui estampas ou padrão de cores variadas."

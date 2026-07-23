@@ -18,3 +18,5 @@ __pycache__/
 airflow/logs/
 airflow/include/data/
 .astro/
+dbt/logs/
+dbt/logs/dbt.log
