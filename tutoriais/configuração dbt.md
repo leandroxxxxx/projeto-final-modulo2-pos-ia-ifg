@@ -21,7 +21,6 @@ Estrutura do projeto:
 projeto-final-modulo2-pos-ia-ifg/
 │
 ├── airflow/
-├── dbt/
 ├── floci/
 ├── requirements.txt
 └── .venv/
@@ -64,16 +63,16 @@ Core:
 
 # 3. Criar o projeto dbt
 
-Na pasta `dbt`:
+Na pasta `airflow/include/` (para que o Docker do Airflow consiga ler os arquivos):
 
 ```bash
-cd dbt
+cd airflow/include/
 ```
 
 Criar o projeto:
 
 ```bash
-dbt init floci_dbt
+dbt init dbt/floci_dbt
 ```
 
 Durante a configuração foi informado:
@@ -89,7 +88,7 @@ Durante o assistente houve um problema na criação do perfil (`profiles.yml`), 
 A estrutura gerada foi semelhante a:
 
 ```text
-dbt/
+airflow/include/dbt/
 └── floci_dbt/
     ├── analyses/
     ├── macros/
@@ -105,7 +104,7 @@ dbt/
 
 # 4. Criar o diretório de configuração
 
-Criar a pasta do dbt:
+Para rodar os testes localmente no seu terminal físico, crie a pasta do dbt no seu usuário local:
 
 ```bash
 mkdir -p ~/.dbt
@@ -113,7 +112,9 @@ mkdir -p ~/.dbt
 
 ---
 
-# 5. Criar o arquivo profiles.yml
+# 5. Criar os arquivos profiles.yml (Local vs. Docker)
+
+### 5.1. Perfil para desenvolvimento local (Sua máquina física)
 
 Criar o arquivo:
 
@@ -147,12 +148,42 @@ floci_dbt:
 
 ---
 
+### 5.2. Perfil para execução automatizada (Dentro do Docker do Airflow)
+
+Para que o container do Airflow consiga rodar os comandos, crie uma cópia do `profiles.yml` dentro de `airflow/include/.dbt/profiles.yml`.
+
+A única alteração necessária é o caminho da chave privada (`private_key_path`), que deve apontar para o diretório interno montado pelo Docker:
+
+```yaml
+floci_dbt:
+  target: dev
+
+  outputs:
+    dev:
+      type: snowflake
+
+      account: SFEDU02-GFB24387
+      user: FOX
+
+      private_key_path: "/usr/local/airflow/include/rsa_key.p8"
+
+      role: TRAINING_ROLE
+      database: FOX_DB
+      warehouse: FOX_WH
+      schema: RAW_FASHION
+
+      threads: 4
+      client_session_keep_alive: false
+```
+
+---
+
 # 6. Verificar o perfil do projeto
 
 Confirmar que o projeto utiliza o perfil correto:
 
 ```bash
-grep "^profile:" dbt/floci_dbt/dbt_project.yml
+grep "^profile:" airflow/include/dbt/floci_dbt/dbt_project.yml
 ```
 
 Resultado:
@@ -168,7 +199,7 @@ profile: 'floci_dbt'
 Entrar na pasta do projeto:
 
 ```bash
-cd dbt/floci_dbt
+cd airflow/include/dbt/floci_dbt
 ```
 
 Executar:
@@ -206,18 +237,22 @@ projeto-final-modulo2-pos-ia-ifg/
 │
 ├── airflow/
 │   ├── dags/
+│   │   └── pypeline_fashion.py
 │   └── include/
-│
-├── dbt/
-│   └── floci_dbt/
-│       ├── analyses/
-│       ├── macros/
-│       ├── models/
-│       ├── seeds/
-│       ├── snapshots/
-│       ├── tests/
-│       ├── dbt_project.yml
-│       └── README.md
+│       ├── rsa_key.p8
+│       ├── rsa_key.pub
+│       ├── .dbt/
+│       │   └── profiles.yml
+│       └── dbt/
+│           └── floci_dbt/
+│               ├── analyses/
+│               ├── macros/
+│               ├── models/
+│               ├── seeds/
+│               ├── snapshots/
+│               ├── tests/
+│               ├── dbt_project.yml
+│               └── README.md
 │
 ├── floci/
 ├── requirements.txt
