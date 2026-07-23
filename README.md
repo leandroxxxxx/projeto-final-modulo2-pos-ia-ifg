@@ -1,105 +1,126 @@
-# Projeto Final Integrado: Pipeline de Dados em Nuvem para Aprendizagem de Máquina
+# Projeto Final Integrado: Pipeline de Dados em Nuvem para Machine Learning
 
-Este repositório contém a solução desenvolvida para o projeto integrado do Módulo 2 da Pós-Graduação em Inteligência Artificial Aplicada (IFG).
+Este repositório reúne a implementação do Projeto Final Integrado desenvolvido para o Módulo 2 da Pós-Graduação em Inteligência Artificial Aplicada do IFG.
 
-O pipeline realiza a extração de dados estruturados (metadados de moda) e dados não estruturados (imagens de produtos), extrai atributos de cores das imagens em memória no Airflow e os carrega de forma automatizada em um banco de dados analítico na nuvem para futuras modelagens e análises.
-
----
-
-## 🚀 Como Executar o Projeto (Guia Passo a Passo)
-
-### 1. Requisitos Prévios
-Antes de começar, certifique-se de ter instalado em sua máquina:
-- **Docker** e **Docker Compose**
-- **Astro CLI** (Astronomer Airflow local)
-- **Floci** (Emulador local do AWS S3)
-- **Python 3.12+**
+O objetivo do projeto é construir um pipeline de dados em nuvem capaz de integrar informações estruturadas (metadados de produtos de moda) e dados não estruturados (imagens). Durante o processamento, as imagens são analisadas diretamente em memória pelo Airflow para extrair atributos relacionados às cores predominantes. Em seguida, esses dados são consolidados e carregados automaticamente para um Data Warehouse na nuvem, onde ficam preparados para análises e futuras aplicações de Machine Learning.
 
 ---
 
-### 2. Configuração do Ambiente Local
-Crie e ative o seu ambiente virtual Python para rodar os scripts de preparação na sua máquina física:
+# Como executar o projeto
+
+## 1. Pré-requisitos
+
+Antes de iniciar, verifique se os seguintes softwares estão instalados na sua máquina:
+
+* Docker e Docker Compose;
+* Astro CLI (Astronomer);
+* Floci (emulador local do Amazon S3);
+* Python 3.12 ou superior.
+
+---
+
+## 2. Configuração do ambiente
+
+Crie um ambiente virtual Python para executar os scripts de preparação dos dados.
 
 ```bash
-# Criar o ambiente virtual
+# Criar ambiente virtual
 python -m venv .venv
 
-# Ativar o ambiente virtual (Linux/macOS)
+# Ativar o ambiente (Linux/macOS)
 source .venv/bin/activate
 
-# Instalar as dependências necessárias localmente
+# Instalar dependências
 pip install pillow pandas numpy boto3 snowflake-connector-python[pandas] cryptography
 ```
 
 ---
 
-### 3. Preparação e Amostragem dos Dados (Kaggle)
-Para otimizar o armazenamento e o desempenho computacional, trabalhamos com uma amostra de **1.000 imagens** extraídas do dataset *Fashion Product Images (Small)* do Kaggle.
+## 3. Preparação dos dados
 
-1. Baixe o dataset simplificado (~575 MB) no Kaggle.
-2. Descompacte o arquivo `.zip` localmente.
-3. Crie o diretório `airflow/include/data/dataset/` no seu projeto.
-4. Execute o script de amostragem local para gerar a amostra de 1.000 produtos:
-   ```bash
-   python airflow/include/scripts/amostrar_dados.py
-   ```
-   *Este script filtra aleatoriamente 1.000 registros, gera o arquivo `styles_sample.csv` e copia apenas as 1.000 imagens correspondentes para a pasta do Astronomer.*
+Para reduzir o consumo de armazenamento e tornar o processamento mais eficiente, foi utilizada uma amostra de **1.000 imagens** do conjunto de dados *Fashion Product Images (Small)*, disponível no Kaggle.
 
----
+Após baixar e descompactar o dataset:
 
-### 4. Simulação da Infraestrutura de Nuvem (Floci / AWS S3)
-Utilizamos o **Floci** para simular o serviço de armazenamento AWS S3 localmente na porta **4566**.
+1. Crie a pasta `airflow/include/data/dataset/`;
+2. Execute o script de amostragem:
 
-1. Certifique-se de que o Floci está rodando na sua máquina.
-2. Execute o script Python de upload para criar o bucket e subir os dados da sua máquina para o S3 simulado:
-   ```bash
-   python upload_floci.py
-   ```
-   *O script criará o bucket `dataset-project` e enviará a estrutura:*
-   - `s3://dataset-project/styles_sample.csv`
-   - `s3://dataset-project/images/`
+```bash
+python airflow/include/scripts/amostrar_dados.py
+```
+
+Esse script seleciona aleatoriamente 1.000 produtos, gera o arquivo `styles_sample.csv` e copia apenas as imagens correspondentes para o diretório utilizado pelo Airflow.
 
 ---
 
-### 5. Introdução ao Snowflake e Configuração de Segurança (Key-Pair)
+## 4. Simulação do Amazon S3
 
-#### **Qual é a função do Snowflake no projeto?**
-O **Snowflake** é o nosso **Cloud Data Warehouse (DW)**, ou seja, o nosso banco de dados analítico centralizado na nuvem [6]. Sua função é armazenar de forma segura e performática todos os dados estruturados e os novos atributos que extraímos das imagens [6]. Ele organiza os dados em três camadas lógicas de maturação [6]:
-1. **Bronze (RAW):** Armazena os dados brutos exatamente como vieram do S3 [6].
-2. **Silver (STAGING):** Armazena os dados limpos, padronizados e tipados via dbt [6].
-3. **Gold (CORE/ANALYTICS):** Armazena as tabelas finais prontas para alimentar os modelos de Machine Learning e o painel de visualização do Metabase [6, 8].
+Durante o desenvolvimento, o armazenamento em nuvem foi simulado utilizando o **Floci**, que disponibiliza uma implementação local compatível com o Amazon S3.
 
----
+Certifique-se de que o serviço esteja em execução e execute:
 
-#### **Configurando a segurança de acesso (Snowflake Key-Pair):**
-Como a conta do Snowflake exige obrigatoriamente a verificação de duas etapas (MFA com Token/TOTP), configuramos a **Autenticação por Par de Chaves (Key-Pair)** para que o Airflow (Docker) consiga se conectar ao banco de forma automatizada e sem a necessidade de digitação manual de senhas ou tokens de 30 segundos [1.1.2, 1.2.1].
+```bash
+python upload_floci.py
+```
 
-1. No terminal do seu notebook, acesse a pasta `include` do projeto e gere as chaves criptográficas:
-   ```bash
-   cd "airflow/include"
-   # Gerar chave privada descriptografada
-   openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out rsa_key.p8 -nocrypt
-   # Gerar chave pública correspondente
-   openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
-   ```
-2. Abra o arquivo `rsa_key.pub` gerado, copie o texto interno da chave e execute o SQL abaixo na sua planilha web do Snowflake para associar a chave ao seu usuário:
-   ```sql
-   ALTER USER FOX SET RSA_PUBLIC_KEY='SUA_CHAVE_COPIADA_AQUI';
-   ```
+O script cria automaticamente o bucket `dataset-project` (caso ainda não exista) e envia os arquivos para a seguinte estrutura:
+
+* `styles_sample.csv`
+* `images/`
 
 ---
 
-### 6. Inicialização das Camadas no Snowflake
-Acesse a planilha web do seu Snowflake online e execute o script SQL abaixo para preparar a infraestrutura lógica do seu Data Warehouse e criar a tabela da camada Bronze (`RAW`) que receberá o processamento do Airflow [6]:
+## 5. Configuração do Snowflake
+
+### Papel do Snowflake no projeto
+
+O Snowflake é utilizado como Data Warehouse em nuvem, responsável por armazenar todos os dados processados pelo pipeline.
+
+A estrutura foi organizada seguindo uma arquitetura em três camadas:
+
+* **Bronze (RAW):** armazenamento dos dados exatamente como foram recebidos;
+* **Silver (STAGING):** dados tratados, padronizados e enriquecidos;
+* **Gold (CORE):** tabelas analíticas prontas para alimentar modelos de Machine Learning e dashboards.
+
+---
+
+### Configuração da autenticação por chave
+
+Como a conta do Snowflake utiliza autenticação multifator (MFA), foi adotada a autenticação por par de chaves (Key-Pair Authentication). Dessa forma, o Airflow consegue acessar o banco automaticamente, sem necessidade de inserir senhas ou códigos temporários durante a execução do pipeline.
+
+Na pasta `airflow/include`, execute:
+
+```bash
+cd airflow/include
+
+# Gerar chave privada
+openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out rsa_key.p8 -nocrypt
+
+# Gerar chave pública
+openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
+```
+
+Depois, copie o conteúdo do arquivo `rsa_key.pub` e associe-o ao seu usuário no Snowflake executando:
 
 ```sql
--- Criando o Banco e as três camadas lógicas do projeto (Bronze, Silver e Gold)
-CREATE DATABASE IF NOT EXISTS FOX_DB;
-CREATE SCHEMA IF NOT EXISTS FOX_DB.RAW_FASHION; -- Bronze (Dados Brutos)
-CREATE SCHEMA IF NOT EXISTS FOX_DB.STAGING;     -- Silver (Dados Tratados)
-CREATE SCHEMA IF NOT EXISTS FOX_DB.CORE;        -- Gold (Pronto para ML e Dashboards)
+ALTER USER FOX SET RSA_PUBLIC_KEY='SUA_CHAVE_PUBLICA';
+```
 
--- Criando a tabela bruta que receberá a carga do Airflow (com os atributos já extraídos das imagens)
+---
+
+## 6. Preparação do Data Warehouse
+
+Antes da execução do pipeline, é necessário criar a estrutura inicial do banco de dados.
+
+Execute o script SQL abaixo na interface do Snowflake:
+
+```sql
+CREATE DATABASE IF NOT EXISTS FOX_DB;
+
+CREATE SCHEMA IF NOT EXISTS FOX_DB.RAW_FASHION;
+CREATE SCHEMA IF NOT EXISTS FOX_DB.STAGING;
+CREATE SCHEMA IF NOT EXISTS FOX_DB.CORE;
+
 CREATE OR REPLACE TABLE FOX_DB.RAW_FASHION.PRODUCTS_RAW (
     ID INT,
     GENDER VARCHAR,
@@ -117,29 +138,49 @@ CREATE OR REPLACE TABLE FOX_DB.RAW_FASHION.PRODUCTS_RAW (
 );
 ```
 
----
-
-### 7. Orquestração e Carga Automatizada (Airflow)
-A orquestração do pipeline está consolidada no arquivo **`airflow/dags/pypeline_fashion.py`**. O fluxo de trabalho é composto por duas tarefas interligadas:
-
-1. **`check_or_create_s3_bucket`**: Uma tarefa de verificação automática (*self-healing*) que checa se o bucket `dataset-project` existe no S3 local e o recria vazio caso o Floci tenha sido reiniciado.
-2. **`process_images_and_load_to_snowflake`**: Baixa o CSV estruturado, varre as imagens do S3 local na memória, processa os pixels para extrair os atributos de cores médias (R, G, B) utilizando a biblioteca *Pillow*, une os dados e faz o upload otimizado (`write_pandas`) diretamente para a nuvem do Snowflake via chave privada (`rsa_key.p8`).
-
-Para rodar o pipeline:
-1. Navegue até a pasta do Astronomer e inicie o Airflow:
-   ```bash
-   cd "airflow"
-   astro dev start
-   ```
-2. Acesse a interface gráfica no navegador (`http://localhost:8080`).
-3. Ative a DAG `pipeline_fashion_elt` (deixe o botão azul) e clique em **Trigger DAG** (Play) para ver a execução terminar com sucesso.
+Essa tabela será utilizada como camada Bronze, recebendo diretamente os dados produzidos pelo Airflow.
 
 ---
 
-## 🛠️ Próximas Etapas do Projeto (A Fazer)
+## 7. Execução do pipeline
 
-- [ ] **Modelagem Analítica (dbt):** Configurar o dbt conectado ao Snowflake. Desenvolver as transformações para organizar os dados em tabelas de Staging, Dimensões e Fatos, aplicando testes básicos de restrição no dbt.
-- [ ] **Aprendizagem de Máquina (Python):** Criar uma tarefa de ML (como a classificação da categoria do produto `MASTER_CATEGORY` com base nos atributos de cores extraídos). O modelo deve ser comparado entre a versão desenvolvida do zero (**Hard-code**) e a versão com bibliotecas (**Scikit-learn**).
-- [ ] **Visualização de Dados (Metabase):** Conectar o Metabase ao Snowflake para estruturar um dashboard de apoio à decisão, exibindo a classificação do modelo para os gestores de negócio.
-- [ ] **Documentação:** Criar o arquivo de template `cloudformation.yaml` na raiz do projeto para documentar a criação do S3 na nuvem AWS real, além de estruturar o relatório final em PDF e os slides para apresentação.
+Toda a orquestração está concentrada na DAG `pipeline_fashion_elt`, localizada em:
+
 ```
+airflow/dags/pypeline_fashion.py
+```
+
+O fluxo possui duas etapas principais.
+
+A primeira verifica automaticamente a existência do bucket no S3 local. Caso o Floci tenha sido reiniciado e o bucket não exista mais, ele é recriado automaticamente.
+
+Na sequência, o pipeline realiza todo o processamento dos dados: baixa o arquivo CSV, percorre as imagens armazenadas no S3, extrai os valores médios dos canais RGB utilizando a biblioteca Pillow, integra essas informações aos metadados e envia o resultado diretamente para o Snowflake utilizando a função `write_pandas`.
+
+Para executar o pipeline:
+
+```bash
+cd airflow
+astro dev start
+```
+
+Depois:
+
+1. Acesse `http://localhost:8080`;
+2. Ative a DAG `pipeline_fashion_elt`;
+3. Clique em **Trigger DAG** para iniciar a execução.
+
+Ao final, todos os dados processados estarão disponíveis na camada Bronze do Snowflake.
+
+---
+
+# Próximas etapas
+
+Ainda estão previstas algumas melhorias para completar o projeto.
+
+* **Modelagem analítica com dbt:** criar as camadas Silver e Gold, desenvolver dimensões e fatos, além de implementar testes de qualidade dos dados.
+
+* **Machine Learning:** desenvolver um modelo capaz de classificar a categoria (`MASTER_CATEGORY`) dos produtos utilizando os atributos de cor extraídos das imagens. A proposta inclui comparar uma implementação desenvolvida manualmente com outra baseada na biblioteca Scikit-learn.
+
+* **Visualização de dados:** conectar o Metabase ao Snowflake para construir dashboards que permitam acompanhar os resultados do processamento e das previsões do modelo.
+
+* **Documentação:** elaborar o arquivo `cloudformation.yaml` para representar a infraestrutura em uma AWS real, além de produzir o relatório técnico e os slides da apresentação final.
