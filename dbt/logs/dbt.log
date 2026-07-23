@@ -1,0 +1,63 @@
+[0m22:27:23.760548 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f76644352b0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f76650c1190>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f7664c386e0>]}
+
+
+============================== 22:27:23.766601 | 472db18e-08df-4776-9d52-22ee141f0cd2 ==============================
+[0m22:27:23.766601 [info ] [MainThread]: Running with dbt=1.12.0
+[0m22:27:23.767429 [debug] [MainThread]: running dbt with arguments {'fail_fast': 'False', 'indirect_selection': 'eager', 'write_json': 'True', 'version_check': 'True', 'log_cache_events': 'False', 'warn_error': 'None', 'introspect': 'True', 'empty': 'None', 'invocation_command': 'dbt init floci_dbt', 'static_parser': 'True', 'log_format': 'default', 'send_anonymous_usage_stats': 'True', 'use_experimental_parser': 'False', 'use_colors': 'True', 'debug': 'False', 'target_path': 'None', 'no_print': 'None', 'cache_selected_only': 'False', 'printer_width': '80', 'log_path': 'logs', 'partial_parse': 'True', 'maximum_seed_size_mib': '1', 'profiles_dir': '/home/leandro/.dbt', 'hints_enabled': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'quiet': 'False'}
+[0m22:27:23.793815 [info ] [MainThread]: Creating dbt configuration folder at /home/leandro/.dbt
+[0m22:27:23.798112 [debug] [MainThread]: Starter project path: /home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/include/starter_project
+[0m22:27:23.806906 [info ] [MainThread]: Setting up your profile.
+[0m22:27:40.468653 [debug] [MainThread]: Snowflake adapter: Setting snowflake.connector to ERROR (file logging only)
+[0m22:27:40.469561 [debug] [MainThread]: Snowflake adapter: Setting botocore to ERROR (file logging only)
+[0m22:27:40.470370 [debug] [MainThread]: Snowflake adapter: Setting boto3 to ERROR (file logging only)
+[0m22:34:04.986904 [error] [MainThread]: [[31mERROR[0m]: Encountered an error:
+
+[0m22:34:05.001251 [error] [MainThread]: Traceback (most recent call last):
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/cli/requires.py", line 190, in wrapper
+    result, success = func(*args, **kwargs)
+                      ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/cli/requires.py", line 136, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/cli/main.py", line 503, in init
+    results = task.run()
+              ^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 360, in run
+    self.setup_profile(profile_name)
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 264, in setup_profile
+    self.create_profile_from_target(adapter, profile_name=profile_name)
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 181, in create_profile_from_target
+    self.create_profile_from_profile_template(profile_template, profile_name)
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 165, in create_profile_from_profile_template
+    target = self.generate_target_from_input(prompts, initial_target)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 118, in generate_target_from_input
+    target = self.generate_target_from_input(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/dbt/task/init.py", line 131, in generate_target_from_input
+    target[key] = click.prompt(
+                  ^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/click/termui.py", line 218, in prompt
+    value = prompt_func(prompt)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/home/leandro/Área de trabalho/POS IFG/projeto-final-modulo2-pos-ia-ifg/.venv/lib/python3.12/site-packages/click/termui.py", line 201, in prompt_func
+    raise Abort() from None
+click.exceptions.Abort
+
+[0m22:34:05.003753 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": false, "command_wall_clock_time": 401.35162, "process_in_blocks": "264200", "process_kernel_time": 0.563272, "process_mem_max_rss": "214324", "process_out_blocks": "88", "process_user_time": 3.500325}
+[0m22:34:05.005588 [debug] [MainThread]: Command `dbt init` failed at 22:34:05.005381 after 401.35 seconds
+[0m22:34:05.006186 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f7665ca7f80>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f7656a5b9e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7f764a53dd30>]}
+[0m22:34:05.006722 [debug] [MainThread]: Flushing usage events
+[0m22:34:05.813499 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m22:34:15.474504 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a315e0c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a315dee0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a315de80>]}
+
+
+============================== 22:34:15.480014 | c14ec691-d0de-4b90-ab63-041da693b9e8 ==============================
+[0m22:34:15.480014 [info ] [MainThread]: Running with dbt=1.12.0
+[0m22:34:15.480784 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'maximum_seed_size_mib': '1', 'indirect_selection': 'eager', 'warn_error': 'None', 'send_anonymous_usage_stats': 'True', 'log_format': 'default', 'write_json': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'use_colors': 'True', 'no_print': 'None', 'static_parser': 'True', 'printer_width': '80', 'use_experimental_parser': 'False', 'debug': 'False', 'log_path': 'logs', 'cache_selected_only': 'False', 'log_cache_events': 'False', 'introspect': 'True', 'partial_parse': 'True', 'fail_fast': 'False', 'target_path': 'None', 'profiles_dir': '/home/leandro/.dbt', 'empty': 'None', 'quiet': 'False', 'hints_enabled': 'True', 'invocation_command': 'dbt init floci_dbt'}
+[0m22:34:15.503352 [info ] [MainThread]: A project called floci_dbt already exists here.
+[0m22:34:15.504465 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 0.12836199, "process_in_blocks": "42328", "process_kernel_time": 0.224804, "process_mem_max_rss": "110352", "process_out_blocks": "0", "process_user_time": 2.040297}
+[0m22:34:15.505079 [debug] [MainThread]: Command `dbt init` succeeded at 22:34:15.504958 after 0.13 seconds
+[0m22:34:15.505558 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a3255880>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a32ee5d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x7496a462f140>]}
+[0m22:34:15.506070 [debug] [MainThread]: Flushing usage events
+[0m22:34:16.304119 [debug] [MainThread]: An error was encountered while trying to flush usage events
