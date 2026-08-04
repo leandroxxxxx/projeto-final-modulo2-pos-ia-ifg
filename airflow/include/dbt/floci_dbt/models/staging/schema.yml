@@ -17,3 +17,12 @@ models:
 
       - name: is_multicolored
         description: "Flag lógica indicando se o produto possui estampas ou padrão de cores variadas."
+
+      - name: saturacao_media
+        description: "Saturação média da imagem no espaço de cor HSV (0-255)."
+
+      - name: complexidade_visual
+        description: "Complexidade visual da imagem medida pelo gradiente horizontal médio da luminância."
+
+      - name: contraste_luminancia
+        description: "Contraste da imagem medido pelo desvio padrão da luminância."

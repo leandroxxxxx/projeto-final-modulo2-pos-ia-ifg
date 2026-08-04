@@ -107,6 +107,9 @@ def process_and_load_to_snowflake():
     std_r_list, std_g_list, std_b_list = [], [], []
     brightness_list = []
     file_size_list = []
+    saturacao_media_list = []
+    complexidade_visual_list = []
+    contraste_luminancia_list = []
 
     print("Iniciando a extração de atributos das imagens...")
     for idx, row in df.iterrows():
@@ -120,7 +123,7 @@ def process_and_load_to_snowflake():
 
             # Abrir imagem e converter para RGB
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            img_array = np.array(img)
+            img_array = np.array(img, dtype=np.float64)
 
             r_channel = img_array[:, :, 0]
             g_channel = img_array[:, :, 1]
@@ -136,12 +139,19 @@ def process_and_load_to_snowflake():
             std_b_list.append(float(np.std(b_channel)))
 
             # Calcular a luminosidade (brilho)
-            brightness_val = float(
-                np.mean(
-                    0.299 * r_channel + 0.587 * g_channel + 0.114 * b_channel
-                )
-            )
-            brightness_list.append(brightness_val)
+            luminancia = 0.299 * r_channel + 0.587 * g_channel + 0.114 * b_channel
+            brightness_list.append(float(np.mean(luminancia)))
+
+            # Calcular o contraste (desvio padrão da luminância)
+            contraste_luminancia_list.append(float(np.std(luminancia)))
+
+            # Calcular a saturação média (espaço de cor HSV)
+            hsv = np.array(img.convert("HSV"), dtype=np.float64)
+            saturacao_media_list.append(float(hsv[:, :, 1].mean()))
+
+            # Calcular a complexidade visual (gradiente horizontal da luminância)
+            diffs_horizontais = np.abs(np.diff(luminancia, axis=1))
+            complexidade_visual_list.append(float(diffs_horizontais.mean()))
         except Exception:
             file_size_list.append(None)
             mean_r_list.append(None)
@@ -151,6 +161,9 @@ def process_and_load_to_snowflake():
             std_g_list.append(None)
             std_b_list.append(None)
             brightness_list.append(None)
+            saturacao_media_list.append(None)
+            complexidade_visual_list.append(None)
+            contraste_luminancia_list.append(None)
 
     df["file_size_bytes"] = file_size_list
     df["mean_r"] = mean_r_list
@@ -160,6 +173,9 @@ def process_and_load_to_snowflake():
     df["std_g"] = std_g_list
     df["std_b"] = std_b_list
     df["brightness"] = brightness_list
+    df["saturacao_media"] = saturacao_media_list
+    df["complexidade_visual"] = complexidade_visual_list
+    df["contraste_luminancia"] = contraste_luminancia_list
 
     df_snowflake = df.rename(columns={
         "id": "ID",
@@ -180,6 +196,9 @@ def process_and_load_to_snowflake():
         "std_r": "STD_R",
         "std_g": "STD_G",
         "std_b": "STD_B",
+        "saturacao_media": "SATURACAO_MEDIA",
+        "complexidade_visual": "COMPLEXIDADE_VISUAL",
+        "contraste_luminancia": "CONTRASTE_LUMINANCIA",
     })
 
     # 3. Ler a chave privada para a autenticação automática (Key-Pair)

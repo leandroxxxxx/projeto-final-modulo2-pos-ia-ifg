@@ -34,3 +34,8 @@ models:
     # Configura todas as tabelas criadas dentro de models/staging/
     staging:
       +materialized: table
+
+    # Configuração para a camada Gold (Core) - modelos de negócio
+    gold:
+      +materialized: table
+      +schema: CORE

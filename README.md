@@ -141,7 +141,15 @@ CREATE OR REPLACE TABLE FOX_DB.RAW_FASHION.PRODUCTS_RAW (
     PRODUCT_DISPLAY_NAME VARCHAR,
     MEAN_R FLOAT,
     MEAN_G FLOAT,
-    MEAN_B FLOAT
+    MEAN_B FLOAT,
+    STD_R FLOAT,
+    STD_G FLOAT,
+    STD_B FLOAT,
+    BRIGHTNESS FLOAT,
+    FILE_SIZE_BYTES INT,
+    SATURACAO_MEDIA FLOAT,
+    COMPLEXIDADE_VISUAL FLOAT,
+    CONTRASTE_LUMINANCIA FLOAT
 );
 ```
 
@@ -160,9 +168,9 @@ airflow/dags/pypeline_fashion.py
 O fluxo completo agora funciona de forma automatizada e idempotente através das seguintes etapas sequenciais:
 
 1. **`check_or_create_s3_bucket`**: Verifica e recria o bucket do Floci automaticamente em caso de reinicialização do ambiente.
-2. **`process_images_and_load_to_snowflake`**: Baixa o CSV estruturado, lê as imagens do S3 local diretamente em memória, extrai suas características de cor (médias RGB e desvios padrão) usando *Pillow* e *NumPy*, executa um comando `TRUNCATE TABLE` na tabela Bronze do Snowflake para evitar duplicações e realiza o upload dos dados consolidados de forma segura.
-3. **`run_dbt_models`**: Dispara automaticamente a execução do dbt Core (`dbt run`) de dentro do container do Airflow, transformando os dados brutos e consolidando a camada **Silver (Staging)** no esquema `STAGING` do Snowflake.
-4. **`test_dbt_models`**: Executa os testes de integridade do dbt (`dbt test`) para validar a unicidade das chaves e a ausência de nulos.
+2. **`process_images_and_load_to_snowflake`**: Baixa o CSV estruturado, lê as imagens do S3 local diretamente em memória, extrai suas características de cor (médias RGB, desvios padrão, brilho, saturação média, complexidade visual e contraste da luminância) usando *Pillow* e *NumPy*, executa um comando `TRUNCATE TABLE` na tabela Bronze do Snowflake para evitar duplicações e realiza o upload dos dados consolidados de forma segura.
+3. **`run_dbt_models`**: Dispara automaticamente a execução do dbt Core (`dbt run`) de dentro do container do Airflow, transformando os dados brutos e consolidando as camadas **Silver (Staging)** e **Gold (Core)** no Snowflake.
+4. **`test_dbt_models`**: Executa os testes de integridade do dbt (`dbt test`) para validar a unicidade das chaves e a ausência de nulos em todas as camadas.
 
 Para executar o pipeline completo:
 
@@ -178,11 +186,75 @@ Depois:
 
 ---
 
+## 8. Verificação dos dados no Snowflake
+
+Após a execução do pipeline, utilize os comandos SQL abaixo para verificar cada camada no Snowflake.
+
+### Camada Bronze (RAW)
+
+```sql
+-- Verificar dados brutos carregados
+SELECT COUNT(*) FROM FOX_DB.RAW_FASHION.PRODUCTS_RAW;
+
+-- Amostra dos dados brutos
+SELECT * FROM FOX_DB.RAW_FASHION.PRODUCTS_RAW LIMIT 10;
+
+-- Verificar se houve falhas no processamento de imagens
+SELECT COUNT(*) FROM FOX_DB.RAW_FASHION.PRODUCTS_RAW WHERE MEAN_R IS NULL;
+```
+
+### Camada Silver (STAGING)
+
+```sql
+-- Verificar dados tratados (staging)
+SELECT * FROM FOX_DB.STAGING.STG_PRODUCTS LIMIT 10;
+```
+
+### Camada Gold (CORE)
+
+```sql
+-- Verificar se as tabelas Gold existem
+SHOW TABLES IN SCHEMA FOX_DB.CORE;
+
+-- Contagem de registros em cada tabela Gold
+SELECT 'DIM_PRODUTOS_ANALYTICS' AS tabela, COUNT(*) AS total FROM FOX_DB.CORE.DIM_PRODUTOS_ANALYTICS
+UNION ALL
+SELECT 'FCT_PREPARACAO_ML', COUNT(*) FROM FOX_DB.CORE.FCT_PREPARACAO_ML
+UNION ALL
+SELECT 'FCT_METRICAS_CORES_BI', COUNT(*) FROM FOX_DB.CORE.FCT_METRICAS_CORES_BI;
+
+-- Amostra da dimensão de produtos (dim_produtos_analytics)
+SELECT * FROM FOX_DB.CORE.DIM_PRODUTOS_ANALYTICS LIMIT 10;
+
+-- Amostra do dataset preparado para Machine Learning (já com cores normalizadas)
+SELECT * FROM FOX_DB.CORE.FCT_PREPARACAO_ML LIMIT 10;
+
+-- Amostra das métricas agregadas para BI
+SELECT * FROM FOX_DB.CORE.FCT_METRICAS_CORES_BI LIMIT 10;
+
+-- Verificar distribuição das categorias principais (target) no dataset de ML
+SELECT target_categoria_principal, COUNT(*) AS quantidade
+FROM FOX_DB.CORE.FCT_PREPARACAO_ML
+GROUP BY target_categoria_principal
+ORDER BY quantidade DESC;
+
+-- Resumo das métricas agregadas: cores médias por categoria
+SELECT 
+    categoria_principal,
+    total_produtos,
+    avg_vermelho,
+    avg_verde,
+    avg_azul,
+    pct_multicolorido
+FROM FOX_DB.CORE.FCT_METRICAS_CORES_BI
+ORDER BY total_produtos DESC;
+```
+
+---
+
 # Próximas etapas
 
 Ainda estão previstas as seguintes melhorias para completar o escopo do projeto:
-
-* **Modelagem Analítica (Camada Gold):** modelar as tabelas analíticas finais (Fatos e Dimensões) na camada Gold utilizando o dbt, preparando a estrutura necessária para consumo de ML e painéis.
 
 * **Machine Learning:** desenvolver o modelo de classificação para prever o campo `MASTER_CATEGORY` a partir dos atributos físicos extraídos. O projeto contará com duas implementações para fins comparativos: uma escrita de forma manual do zero (**Hard-code**) e outra utilizando a biblioteca **Scikit-learn**.
 

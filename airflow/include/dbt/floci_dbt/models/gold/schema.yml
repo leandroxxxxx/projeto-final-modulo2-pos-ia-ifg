@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: dim_produtos_analytics
+    description: "Tabela dimensional consolidada com metadados de produtos de moda e suas respectivas características de cores extraídas. Serve como fonte única da verdade para análises e reporting."
+    columns:
+      - name: produto_id
+        description: "Identificador único do produto."
+        tests:
+          - unique
+          - not_null
+
+      - name: categoria_principal
+        description: "Categoria principal do produto (ex: APPAREL, FOOTWEAR, ACCESSORIES)."
+        tests:
+          - not_null
+
+      - name: genero
+        description: "Gênero alvo do produto (ex: MEN, WOMEN, UNISEX)."
+        tests:
+          - not_null
+
+      - name: media_vermelho
+        description: "Média dos valores do canal vermelho (RGB) da imagem do produto."
+
+      - name: media_verde
+        description: "Média dos valores do canal verde (RGB) da imagem do produto."
+
+      - name: media_azul
+        description: "Média dos valores do canal azul (RGB) da imagem do produto."
+
+      - name: saturacao_media
+        description: "Saturação média da imagem no espaço de cor HSV (0-255)."
+
+      - name: complexidade_visual
+        description: "Complexidade visual da imagem medida pelo gradiente horizontal médio da luminância."
+
+      - name: contraste_luminancia
+        description: "Contraste da imagem medido pelo desvio padrão da luminância."
+
+  - name: fct_preparacao_ml
+    description: "Dataset otimizado para treinamento de modelos preditivos, com cores normalizadas (escala 0-1), remoção de valores ausentes na classe alvo e filtro de categorias com frequência mínima."
+    columns:
+      - name: produto_id
+        description: "Identificador único do produto."
+        tests:
+          - unique
+          - not_null
+
+      - name: target_categoria_principal
+        description: "Variável alvo (target) para classificação da categoria principal do produto."
+        tests:
+          - not_null
+
+      - name: media_vermelho_norm
+        description: "Valor médio do canal vermelho normalizado para escala 0-1."
+
+      - name: media_verde_norm
+        description: "Valor médio do canal verde normalizado para escala 0-1."
+
+      - name: media_azul_norm
+        description: "Valor médio do canal azul normalizado para escala 0-1."
+
+      - name: saturacao_media_norm
+        description: "Saturação média normalizada para escala 0-1."
+
+      - name: contraste_luminancia_norm
+        description: "Contraste da luminância normalizado para escala 0-1."
+
+      - name: complexidade_visual_norm
+        description: "Complexidade visual normalizada para escala 0-1."
+
+  - name: fct_metricas_cores_bi
+    description: "Tabela agregada por categoria, subcategoria, gênero e estação, contendo métricas de cor (médias, desvios, proporção de multicoloridos e brilho médio). Otimizada para consultas rápidas no Metabase."
+    columns:
+      - name: categoria_principal
+        description: "Categoria principal do produto."
+        tests:
+          - not_null
+
+      - name: total_produtos
+        description: "Quantidade total de produtos no agrupamento."
+        tests:
+          - not_null
+
+      - name: avg_vermelho
+        description: "Média do canal vermelho no agrupamento."
+
+      - name: avg_verde
+        description: "Média do canal verde no agrupamento."
+
+      - name: avg_azul
+        description: "Média do canal azul no agrupamento."
+
+      - name: pct_multicolorido
+        description: "Percentual de produtos classificados como multicoloridos/estampados no agrupamento."
+
+      - name: avg_saturacao
+        description: "Saturação média no agrupamento."
+
+      - name: avg_complexidade_visual
+        description: "Complexidade visual média no agrupamento."
+
+      - name: avg_contraste_luminancia
+        description: "Contraste de luminância médio no agrupamento."

@@ -29,6 +29,9 @@ cleaned_data as (
         std_r,
         std_g,
         std_b,
+        saturacao_media,
+        complexidade_visual,
+        contraste_luminancia,
 
         -- Lógica de negócio: classificação automática de estampas/multicolorido
         case 
