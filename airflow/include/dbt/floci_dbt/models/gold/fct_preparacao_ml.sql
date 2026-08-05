@@ -22,6 +22,9 @@ select
     round(media_verde / 255.0, 4) as media_verde_norm,
     round(media_azul / 255.0, 4) as media_azul_norm,
     
+    -- Brilho médio normalizado (escala 0-1)
+    round(brilho / 255.0, 4) as brilho_norm,
+    
     -- Atributos avançados normalizados (escala 0-100 para saturação, 
     -- e min-max aproximado para complexidade e contraste)
     round(saturacao_media / 255.0, 4) as saturacao_media_norm,

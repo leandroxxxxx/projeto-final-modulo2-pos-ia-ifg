@@ -61,6 +61,9 @@ models:
       - name: media_azul_norm
         description: "Valor médio do canal azul normalizado para escala 0-1."
 
+      - name: brilho_norm
+        description: "Brilho médio da imagem normalizado para escala 0-1."
+
       - name: saturacao_media_norm
         description: "Saturação média normalizada para escala 0-1."
 
